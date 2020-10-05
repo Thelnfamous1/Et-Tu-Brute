@@ -1,4 +1,4 @@
-package com.infamous.ettubrute.entity;
+package com.infamous.ettubrute.mod;
 
 import com.infamous.ettubrute.entity.piglinbrute.PiglinBruteEntity;
 import com.infamous.ettubrute.entity.ziglinbrute.ZiglinBruteEntity;

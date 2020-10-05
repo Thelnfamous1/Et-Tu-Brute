@@ -1,6 +1,6 @@
 package com.infamous.ettubrute.entity.ziglinbrute;
 
-import com.infamous.ettubrute.entity.ModEntityTypes;
+import com.infamous.ettubrute.mod.ModEntityTypes;
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -85,15 +85,15 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     public static AttributeModifierMap.MutableAttribute setCustomAttributes() {
         return ZombieEntity.func_233666_p_()
                 // brute health
-                .func_233815_a_(Attributes.field_233818_a_, 50.0D)
+                .createMutableAttribute(Attributes.MAX_HEALTH, 50.0D)
                 // brute movement speed
                 //.func_233815_a_(Attributes.field_233821_d_, 0.3499999940395355D)
                 // brute attack damage
-                .func_233815_a_(Attributes.field_233823_f_, 7.0D)
+                .createMutableAttribute(Attributes.ATTACK_DAMAGE, 7.0D)
                 // zombie spawn reinforcements
-                .func_233815_a_(Attributes.field_233829_l_, 0.0D)
+                .createMutableAttribute(Attributes.ZOMBIE_SPAWN_REINFORCEMENTS, 0.0D)
                 // zombie movement speed
-                .func_233815_a_(Attributes.field_233821_d_, 0.23000000417232513D)
+                .createMutableAttribute(Attributes.MOVEMENT_SPEED, 0.23000000417232513D)
                 // zombie attack damage
                 //.func_233815_a_(Attributes.field_233823_f_, 5.0D)
                 ;
@@ -110,10 +110,14 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
         if(EtTuBruteConfig.COMMON.ENABLE_BABY_ZIGLIN_BRUTES.get()){
             this.getDataManager().set(IS_CHILD, childZombie);
             if (this.world != null && !this.world.isRemote) {
-                ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.field_233821_d_);
-                modifiableattributeinstance.removeModifier(BABY_SPEED_BOOST);
+                ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (modifiableattributeinstance != null) {
+                    modifiableattributeinstance.removeModifier(BABY_SPEED_BOOST);
+                }
                 if (childZombie) {
-                    modifiableattributeinstance.func_233767_b_(BABY_SPEED_BOOST);
+                    if (modifiableattributeinstance != null) {
+                        modifiableattributeinstance.applyPersistentModifier(BABY_SPEED_BOOST);
+                    }
                 }
             }
         }
@@ -125,15 +129,15 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     }
 
     protected void updateAITasks() {
-        ModifiableAttributeInstance modifiableAttributeInstance = this.getAttribute(Attributes.field_233821_d_);
+        ModifiableAttributeInstance attackSpeed = this.getAttribute(Attributes.ATTACK_SPEED);
         if (this.func_233678_J__()) {
-            if (!this.isChild() && !modifiableAttributeInstance.hasModifier(ATTACK_SPEED_MODIFIER)) {
-                modifiableAttributeInstance.func_233767_b_(ATTACK_SPEED_MODIFIER);
+            if (attackSpeed != null && !this.isChild() && !attackSpeed.hasModifier(ATTACK_SPEED_MODIFIER)) {
+                attackSpeed.applyPersistentModifier(ATTACK_SPEED_MODIFIER);
             }
 
             this.func_241409_eY_();
-        } else if (modifiableAttributeInstance.hasModifier(ATTACK_SPEED_MODIFIER)) {
-            modifiableAttributeInstance.removeModifier(ATTACK_SPEED_MODIFIER);
+        } else if (attackSpeed != null && attackSpeed.hasModifier(ATTACK_SPEED_MODIFIER)) {
+            attackSpeed.removeModifier(ATTACK_SPEED_MODIFIER);
         }
 
         this.func_241359_a_((ServerWorld)this.world, true);
@@ -228,8 +232,8 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     }
 
     private void func_241411_fa_() {
-        double followRange = this.func_233637_b_(Attributes.field_233819_b_);
-        AxisAlignedBB axisAlignedBB = AxisAlignedBB.func_241549_a_(this.getPositionVec()).grow(followRange, 10.0D, followRange);
+        double followRange = this.getAttributeValue(Attributes.FOLLOW_RANGE);
+        AxisAlignedBB axisAlignedBB = AxisAlignedBB.fromVector(this.getPositionVec()).grow(followRange, 10.0D, followRange);
         this.world.getLoadedEntitiesWithinAABB(ZombifiedPiglinEntity.class, axisAlignedBB).stream().filter((zombifiedPiglinEntity) -> {
             return zombifiedPiglinEntity != this;
         }).filter((zombifiedPiglinEntity) -> {
@@ -242,7 +246,7 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     }
 
     private void func_234353_eV_() {
-        this.playSound(SoundEvents.field_232847_rN_, this.getSoundVolume() * 2.0F, this.getSoundPitch() * 1.8F);
+        this.playSound(SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, this.getSoundVolume() * 2.0F, this.getSoundPitch() * 1.8F);
     }
 
     public void setAttackTarget(@Nullable LivingEntity livingEntity) {
@@ -272,12 +276,12 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
 
     public void writeAdditional(CompoundNBT compoundNBT) {
         super.writeAdditional(compoundNBT);
-        this.func_233682_c_(compoundNBT);
+        this.writeAngerNBT(compoundNBT);
     }
 
     public void readAdditional(CompoundNBT compoundNBT) {
         super.readAdditional(compoundNBT);
-        this.func_241358_a_((ServerWorld)this.world, compoundNBT);
+        this.readAngerNBT((ServerWorld)this.world, compoundNBT);
     }
 
     public void func_230260_a__(int p_230260_1_) {
@@ -293,15 +297,15 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     }
 
     protected SoundEvent getAmbientSound() {
-        return this.func_233678_J__() ? SoundEvents.field_232847_rN_ : SoundEvents.field_232846_rM_;
+        return this.func_233678_J__() ? SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_ANGRY : SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_AMBIENT;
     }
 
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return SoundEvents.field_232849_rP_;
+        return SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_HURT;
     }
 
     protected SoundEvent getDeathSound() {
-        return SoundEvents.field_232848_rO_;
+        return SoundEvents.ENTITY_ZOMBIFIED_PIGLIN_DEATH;
     }
 
     protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficultyInstance) {
@@ -313,7 +317,7 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     }
 
     protected void func_230291_eT_() {
-        this.getAttribute(Attributes.field_233829_l_).setBaseValue(0.0D);
+        this.getAttribute(Attributes.ZOMBIE_SPAWN_REINFORCEMENTS).setBaseValue(0.0D);
     }
 
     public UUID func_230257_G__() {
@@ -326,8 +330,8 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
 
     static {
         ATTACK_SPEED_MODIFIER = new AttributeModifier(ATTACK_SPEED_MODIFIER_UUID, "Attacking speed boost", 0.05D, AttributeModifier.Operation.ADDITION);
-        field_234350_d_ = TickRangeConverter.func_233037_a_(0, 1);
-        field_234346_bv_ = TickRangeConverter.func_233037_a_(20, 39);
-        field_241403_bz_ = TickRangeConverter.func_233037_a_(4, 6);
+        field_234350_d_ = TickRangeConverter.convertRange(0, 1);
+        field_234346_bv_ = TickRangeConverter.convertRange(20, 39);
+        field_241403_bz_ = TickRangeConverter.convertRange(4, 6);
     }
 }

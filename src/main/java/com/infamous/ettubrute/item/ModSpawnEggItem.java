@@ -1,4 +1,4 @@
-package com.infamous.ettubrute.entity;
+package com.infamous.ettubrute.item;
 
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.dispenser.DefaultDispenseItemBehavior;

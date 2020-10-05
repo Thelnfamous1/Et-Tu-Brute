@@ -31,7 +31,7 @@ public abstract class AbstractPiglinEntity extends MonsterEntity {
     protected int TIME_IN_OVERWORLD = 0;
 
     public AbstractPiglinEntity(World world){
-        super(EntityType.field_233591_ai_, world);
+        super(EntityType.PIGLIN, world);
     }
 
     public AbstractPiglinEntity(EntityType<? extends AbstractPiglinEntity> p_i241915_1_, World p_i241915_2_) {
@@ -113,7 +113,7 @@ public abstract class AbstractPiglinEntity extends MonsterEntity {
     }
 
     protected void zombify(ServerWorld p_234416_1_) {
-        ZombifiedPiglinEntity zombifiedPiglinEntity = (ZombifiedPiglinEntity)this.func_233656_b_(EntityType.field_233592_ba_);
+        ZombifiedPiglinEntity zombifiedPiglinEntity = (ZombifiedPiglinEntity)this.func_233656_b_(EntityType.ZOMBIFIED_PIGLIN);
         if (zombifiedPiglinEntity != null) {
             zombifiedPiglinEntity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 200, 0));
         }
@@ -129,7 +129,7 @@ public abstract class AbstractPiglinEntity extends MonsterEntity {
 
     @Nullable
     public LivingEntity getAttackTarget() {
-        return (LivingEntity)this.brain.getMemory(MemoryModuleType.field_234103_o_).orElse((LivingEntity) null);
+        return (LivingEntity)this.brain.getMemory(MemoryModuleType.ATTACK_TARGET).orElse((LivingEntity) null);
     }
 
     protected boolean hasWeapon() {

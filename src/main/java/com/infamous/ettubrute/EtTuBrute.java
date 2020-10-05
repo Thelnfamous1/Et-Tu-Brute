@@ -1,12 +1,11 @@
 package com.infamous.ettubrute;
 
-import com.infamous.ettubrute.entity.MobSpawner;
-import com.infamous.ettubrute.entity.ModEntityTypes;
-import com.infamous.ettubrute.entity.ModItems;
+import com.infamous.ettubrute.mod.ModEntityTypes;
+import com.infamous.ettubrute.mod.ModItems;
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
-import com.infamous.ettubrute.entity.piglinbrute.ModSensorTypes;
 import com.infamous.ettubrute.entity.piglinbrute.PiglinBruteEntity;
 import com.infamous.ettubrute.entity.ziglinbrute.ZiglinBruteEntity;
+import com.infamous.ettubrute.mod.ModSensorTypes;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -14,7 +13,6 @@ import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
@@ -56,8 +54,8 @@ public class EtTuBrute
     private void setup(final FMLCommonSetupEvent event)
     {
         DeferredWorkQueue.runLater(() -> {
-            GlobalEntityTypeAttributes.put(ModEntityTypes.PIGLIN_BRUTE.get(), PiglinBruteEntity.setCustomAttributes().func_233813_a_());
-            GlobalEntityTypeAttributes.put(ModEntityTypes.ZIGLIN_BRUTE.get(), ZiglinBruteEntity.setCustomAttributes().func_233813_a_());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.PIGLIN_BRUTE.get(), PiglinBruteEntity.setCustomAttributes().create());
+            GlobalEntityTypeAttributes.put(ModEntityTypes.ZIGLIN_BRUTE.get(), ZiglinBruteEntity.setCustomAttributes().create());
         });
 
         MobSpawner.setupMobSpawn();

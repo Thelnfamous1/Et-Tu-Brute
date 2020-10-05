@@ -1,7 +1,8 @@
 package com.infamous.ettubrute.entity.piglinbrute;
 
 import com.google.common.collect.ImmutableList;
-import com.infamous.ettubrute.entity.ModEntityTypes;
+import com.infamous.ettubrute.mod.ModSensorTypes;
+import com.infamous.ettubrute.mod.ModEntityTypes;
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
 import com.infamous.ettubrute.entity.ziglinbrute.ZiglinBruteEntity;
 import com.mojang.serialization.Dynamic;
@@ -15,6 +16,7 @@ import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.brain.sensor.Sensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
+import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.monster.ZombifiedPiglinEntity;
 import net.minecraft.entity.monster.piglin.PiglinEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -25,6 +27,8 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.pathfinding.GroundPathNavigator;
+import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
 import net.minecraft.util.DamageSource;
@@ -41,7 +45,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class PiglinBruteEntity extends AbstractPiglinEntity {
+public class PiglinBruteEntity extends MonsterEntity {
+    protected static final DataParameter<Boolean> IS_IMMUNNE_TO_ZOMBIFICATION = EntityDataManager.createKey(PiglinBruteEntity.class, DataSerializers.BOOLEAN);
+    protected int timeInOverworld = 0;
     private static final DataParameter<Boolean> IS_CHILD = EntityDataManager.createKey(PiglinBruteEntity.class, DataSerializers.BOOLEAN);
     private static final UUID BABY_SPEED_BOOST_UUID = UUID.fromString("766bfa64-11f3-11ea-8d71-362b9e155667");
     private static final AttributeModifier BABY_SPEED_BOOST = new AttributeModifier(BABY_SPEED_BOOST_UUID, "Baby speed boost", (double)0.2F, AttributeModifier.Operation.MULTIPLY_BASE);
@@ -50,9 +56,20 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
     protected static final ImmutableList<SensorType<? extends Sensor<? super PiglinBruteEntity>>> SENSOR_TYPES;
     protected static final ImmutableList MEMORY_MODULES;
 
-    public PiglinBruteEntity(EntityType<? extends AbstractPiglinEntity> entityType, World world) {
+    public PiglinBruteEntity(EntityType<? extends PiglinBruteEntity> entityType, World world) {
         super(entityType, world);
+        this.setCanPickUpLoot(true);
+        this.func_242339_eS();
+        this.setPathPriority(PathNodeType.DANGER_FIRE, 16.0F);
+        this.setPathPriority(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.experienceValue = 20;
+    }
+
+    private void func_242339_eS() {
+        if (this.getNavigator() instanceof GroundPathNavigator) {
+            ((GroundPathNavigator)this.getNavigator()).setBreakDoors(true);
+        }
+
     }
 
     public PiglinBruteEntity(World world) {
@@ -64,6 +81,7 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
     protected void registerData() {
         super.registerData();
         this.dataManager.register(IS_CHILD, false);
+        this.dataManager.register(IS_IMMUNNE_TO_ZOMBIFICATION, false);
     }
 
     public void notifyDataManagerChange(DataParameter<?> key) {
@@ -73,8 +91,18 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
         }
 
     }
+    public void setImmuneToZombification(boolean immuneToZombification) {
+        this.getDataManager().set(IS_IMMUNNE_TO_ZOMBIFICATION, immuneToZombification);
+    }
 
-    @Override
+    protected boolean getImmuneToZombification() {
+        return this.getDataManager().get(IS_IMMUNNE_TO_ZOMBIFICATION);
+    }
+
+    public boolean canZombify() {
+        return !this.world.func_230315_m_().func_241509_i_() && !this.getImmuneToZombification() && !this.isAIDisabled();
+    }
+
     protected void zombify(ServerWorld serverWorld) {
         if(EtTuBruteConfig.COMMON.ENABLE_ZIGLIN_BRUTES.get() && EtTuBruteConfig.COMMON.ENABLE_BRUTES_BECOME_ZIGLIN_BRUTES.get()){
             ZiglinBruteEntity ziglinBruteEntity = (ZiglinBruteEntity)this.func_233656_b_(ModEntityTypes.ZIGLIN_BRUTE.get());
@@ -83,7 +111,7 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
             }
         }
         else{
-            ZombifiedPiglinEntity zombifiedPiglinEntity = (ZombifiedPiglinEntity)this.func_233656_b_(EntityType.field_233592_ba_);
+            ZombifiedPiglinEntity zombifiedPiglinEntity = (ZombifiedPiglinEntity)this.func_233656_b_(EntityType.ZOMBIFIED_PIGLIN);
             if (zombifiedPiglinEntity != null) {
                 zombifiedPiglinEntity.addPotionEffect(new EffectInstance(Effects.NAUSEA, 200, 0));
             }
@@ -93,11 +121,11 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
     public static AttributeModifierMap.MutableAttribute setCustomAttributes() {
         return MobEntity.func_233666_p_()
                 // health
-                .func_233815_a_(Attributes.field_233818_a_, 50.0D)
+                .createMutableAttribute(Attributes.MAX_HEALTH, 50.0D)
                 // movement speed
-                .func_233815_a_(Attributes.field_233821_d_, 0.3499999940395355D)
+                .createMutableAttribute(Attributes.MOVEMENT_SPEED, 0.3499999940395355D)
                 // attack damage
-                .func_233815_a_(Attributes.field_233823_f_, 7.0D);
+                .createMutableAttribute(Attributes.ATTACK_DAMAGE, 7.0D);
     }
 
     @Nullable
@@ -131,10 +159,14 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
         if(EtTuBruteConfig.COMMON.ENABLE_BABY_BRUTES.get()){
             this.getDataManager().set(IS_CHILD, childZombie);
             if (!this.world.isRemote) {
-                ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.field_233821_d_);
-                modifiableattributeinstance.removeModifier(BABY_SPEED_BOOST);
+                ModifiableAttributeInstance modifiableattributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (modifiableattributeinstance != null) {
+                    modifiableattributeinstance.removeModifier(BABY_SPEED_BOOST);
+                }
                 if (childZombie) {
-                    modifiableattributeinstance.func_233767_b_(BABY_SPEED_BOOST);
+                    if (modifiableattributeinstance != null) {
+                        modifiableattributeinstance.applyPersistentModifier(BABY_SPEED_BOOST);
+                    }
                 }
             }
         }
@@ -165,10 +197,6 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
         return (Brain<PiglinBruteEntity>) super.getBrain();
     }
 
-    public boolean func_234422_eK_() {
-        return false;
-    }
-
     public boolean func_230293_i_(ItemStack stack) {
         return stack.getItem() == Items.GOLDEN_AXE && super.func_230293_i_(stack);
     }
@@ -179,15 +207,26 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
         this.world.getProfiler().endSection();
         PiglinBruteBrain.setAggroed(this);
         PiglinBruteBrain.activateFight(this);
-        super.updateAITasks();
+
+
+        if (this.canZombify()) {
+            ++this.timeInOverworld;
+        } else {
+            this.timeInOverworld = 0;
+        }
+
+        if (this.timeInOverworld > 300) {
+            this.playZombificationSound();
+            this.zombify((ServerWorld)this.world);
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
     public PiglinEntity.Action getAction() {
-        return this.isAggressive() && this.func_234434_eY_() ? PiglinEntity.Action.ATTACKING_WITH_MELEE_WEAPON : PiglinEntity.Action.DEFAULT;
+        return this.isAggressive() && this.hasMeleeWeapon() ? PiglinEntity.Action.ATTACKING_WITH_MELEE_WEAPON : PiglinEntity.Action.DEFAULT;
     }
 
-    private boolean func_234434_eY_() {
+    private boolean hasMeleeWeapon() {
         return this.getHeldItemMainhand().getItem() instanceof TieredItem;
     }
 
@@ -204,38 +243,85 @@ public class PiglinBruteEntity extends AbstractPiglinEntity {
         }
     }
 
+
+    @Override
+    public void writeAdditional(CompoundNBT compoundNBT) {
+        super.writeAdditional(compoundNBT);
+
+        if (this.isChild()) {
+            compoundNBT.putBoolean("IsBaby", true);
+        }
+        if (this.getImmuneToZombification()) {
+            compoundNBT.putBoolean("IsImmuneToZombification", true);
+        }
+
+        compoundNBT.putInt("TimeInOverworld", this.timeInOverworld);
+    }
+
+    @Override
+    public void readAdditional(CompoundNBT compoundNBT) {
+        super.readAdditional(compoundNBT);
+        this.setChild(compoundNBT.getBoolean("IsBaby"));
+        this.setImmuneToZombification(compoundNBT.getBoolean("IsImmuneToZombification"));
+        this.timeInOverworld = compoundNBT.getInt("TimeInOverworld");
+    }
+
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.field_232788_kS_;
+        return SoundEvents.ENTITY_PIGLIN_AMBIENT;
         //return SoundEvents.field_242132_lc;
     }
 
     protected SoundEvent getHurtSound(DamageSource p_184601_1_) {
-        return SoundEvents.field_232793_kX_;
+        return SoundEvents.ENTITY_PIGLIN_HURT;
         //return SoundEvents.field_242135_lf;
     }
 
     protected SoundEvent getDeathSound() {
-        return SoundEvents.field_232791_kV_;
+        return SoundEvents.ENTITY_PIGLIN_DEATH;
         //return SoundEvents.field_242134_le;
     }
 
     protected void playStepSound(BlockPos blockPos, BlockState blockState) {
-        this.playSound(SoundEvents.field_232795_kZ_, 0.15F, 1.0F);
+        this.playSound(SoundEvents.ENTITY_PIGLIN_STEP, 0.15F, 1.0F);
         //this.playSound(SoundEvents.field_242136_lg, 0.15F, 1.0F);
     }
 
     protected void playFightSound() {
-        this.playSound(SoundEvents.field_232789_kT_, 1.0F, this.getSoundPitch());
+        this.playSound(SoundEvents.ENTITY_PIGLIN_ANGRY, 1.0F, this.getSoundPitch());
         //this.playSound(SoundEvents.field_242133_ld, 1.0F, this.getSoundPitch());
     }
 
     protected void playZombificationSound() {
-        this.playSound(SoundEvents.field_232799_la_, 1.0F, this.getSoundPitch());
+        this.playSound(SoundEvents.ENTITY_PIGLIN_CONVERTED_TO_ZOMBIFIED, 1.0F, this.getSoundPitch());
         //this.playSound(SoundEvents.field_242137_lh, 1.0F, this.getSoundPitch());
     }
 
     static {
-        SENSOR_TYPES = ImmutableList.of(SensorType.NEAREST_LIVING_ENTITIES, SensorType.NEAREST_PLAYERS, SensorType.field_234129_b_, SensorType.HURT_BY, (SensorType)ModSensorTypes.PIGLIN_BRUTE_SPECIFIC_SENSOR.get());
-        MEMORY_MODULES = ImmutableList.of(MemoryModuleType.LOOK_TARGET, MemoryModuleType.field_225462_q, MemoryModuleType.MOBS, MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryModuleType.field_234102_l_, MemoryModuleType.field_234090_X_, MemoryModuleType.field_234089_W_, MemoryModuleType.HURT_BY, MemoryModuleType.HURT_BY_ENTITY, MemoryModuleType.WALK_TARGET, MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE, MemoryModuleType.field_234103_o_, MemoryModuleType.field_234104_p_, MemoryModuleType.INTERACTION_TARGET, MemoryModuleType.PATH, MemoryModuleType.field_234078_L_, MemoryModuleType.field_234077_K_, MemoryModuleType.HOME);
+        SENSOR_TYPES = ImmutableList.of(
+                SensorType.NEAREST_LIVING_ENTITIES,
+                SensorType.NEAREST_PLAYERS,
+                SensorType.field_234129_b_,
+                SensorType.HURT_BY,
+                (SensorType) ModSensorTypes.PIGLIN_BRUTE_SPECIFIC_SENSOR.get()); // Allowed, since it is registered as a sensor type
+        MEMORY_MODULES = ImmutableList.of(
+                MemoryModuleType.LOOK_TARGET,
+                MemoryModuleType.OPENED_DOORS,
+                MemoryModuleType.MOBS,
+                MemoryModuleType.VISIBLE_MOBS,
+                MemoryModuleType.NEAREST_VISIBLE_PLAYER,
+                MemoryModuleType.NEAREST_VISIBLE_TARGETABLE_PLAYER,
+                MemoryModuleType.NEAREST_VISIBLE_ADULT_PIGLINS,
+                MemoryModuleType.NEAREST_ADULT_PIGLINS,
+                MemoryModuleType.HURT_BY,
+                MemoryModuleType.HURT_BY_ENTITY,
+                MemoryModuleType.WALK_TARGET,
+                MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+                MemoryModuleType.ATTACK_TARGET,
+                MemoryModuleType.ATTACK_COOLING_DOWN,
+                MemoryModuleType.INTERACTION_TARGET,
+                MemoryModuleType.PATH,
+                MemoryModuleType.ANGRY_AT,
+                MemoryModuleType.NEAREST_VISIBLE_NEMESIS,
+                MemoryModuleType.HOME);
     }
 }

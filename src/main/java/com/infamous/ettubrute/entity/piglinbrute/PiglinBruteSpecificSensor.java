@@ -23,7 +23,7 @@ public class PiglinBruteSpecificSensor extends Sensor<LivingEntity> {
     }
 
     public Set<MemoryModuleType<?>> getUsedMemories() {
-        return ImmutableSet.of(MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.field_234077_K_, MemoryModuleType.field_234089_W_);
+        return ImmutableSet.of(MemoryModuleType.VISIBLE_MOBS, MemoryModuleType.NEAREST_VISIBLE_NEMESIS, MemoryModuleType.NEAREST_ADULT_PIGLINS);
     }
 
     protected void update(ServerWorld serverWorld, LivingEntity livingEntity) {
@@ -55,7 +55,7 @@ public class PiglinBruteSpecificSensor extends Sensor<LivingEntity> {
             //}
         }
 
-        entityBrain.setMemory(MemoryModuleType.field_234077_K_, optionalMobEntity);
-        entityBrain.setMemory(MemoryModuleType.field_234089_W_, piglinEntityList);
+        entityBrain.setMemory(MemoryModuleType.NEAREST_VISIBLE_NEMESIS, optionalMobEntity);
+        entityBrain.setMemory(MemoryModuleType.NEAREST_ADULT_PIGLINS, piglinEntityList);
     }
 }

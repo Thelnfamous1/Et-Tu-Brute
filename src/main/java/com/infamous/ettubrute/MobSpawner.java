@@ -1,6 +1,7 @@
-package com.infamous.ettubrute.entity;
+package com.infamous.ettubrute;
 
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
+import com.infamous.ettubrute.mod.ModEntityTypes;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
@@ -45,6 +46,6 @@ public class MobSpawner {
     }
 
     public static boolean isPiglinBiome(Biome biome){
-        return biome == Biomes.field_235254_j_ || biome == Biomes.field_235253_az_;
+        return biome == Biomes.NETHER_WASTES || biome == Biomes.CRIMSON_FOREST;
     }
 }

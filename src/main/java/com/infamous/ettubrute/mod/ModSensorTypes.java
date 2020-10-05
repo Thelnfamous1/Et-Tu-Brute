@@ -1,5 +1,6 @@
-package com.infamous.ettubrute.entity.piglinbrute;
+package com.infamous.ettubrute.mod;
 
+import com.infamous.ettubrute.entity.piglinbrute.PiglinBruteSpecificSensor;
 import net.minecraft.entity.ai.brain.sensor.SensorType;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;

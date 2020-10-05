@@ -1,5 +1,6 @@
-package com.infamous.ettubrute.entity;
+package com.infamous.ettubrute.mod;
 
+import com.infamous.ettubrute.item.ModSpawnEggItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraftforge.fml.RegistryObject;
