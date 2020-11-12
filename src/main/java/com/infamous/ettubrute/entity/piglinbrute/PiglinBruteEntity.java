@@ -7,6 +7,7 @@ import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
 import com.infamous.ettubrute.entity.ziglinbrute.ZiglinBruteEntity;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
@@ -35,6 +36,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -43,6 +45,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
+import java.util.Random;
 import java.util.UUID;
 
 public class PiglinBruteEntity extends MonsterEntity {
@@ -63,6 +66,10 @@ public class PiglinBruteEntity extends MonsterEntity {
         this.setPathPriority(PathNodeType.DANGER_FIRE, 16.0F);
         this.setPathPriority(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.experienceValue = 20;
+    }
+
+    public static boolean canPiglinBruteSpawn(EntityType<PiglinBruteEntity> entityType, IWorld world, SpawnReason spawnReason, BlockPos blockPos, Random random) {
+        return world.getDifficulty() != Difficulty.PEACEFUL && world.getBlockState(blockPos.down()).getBlock() != Blocks.NETHER_WART_BLOCK;
     }
 
     private void func_242339_eS() {

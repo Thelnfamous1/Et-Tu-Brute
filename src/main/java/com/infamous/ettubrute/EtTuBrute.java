@@ -1,11 +1,13 @@
 package com.infamous.ettubrute;
 
+import com.infamous.ettubrute.mod.EntitySpawnPlacements;
 import com.infamous.ettubrute.mod.ModEntityTypes;
 import com.infamous.ettubrute.mod.ModItems;
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
 import com.infamous.ettubrute.entity.piglinbrute.PiglinBruteEntity;
 import com.infamous.ettubrute.entity.ziglinbrute.ZiglinBruteEntity;
 import com.infamous.ettubrute.mod.ModSensorTypes;
+import net.minecraft.entity.EntitySpawnPlacementRegistry;
 import net.minecraft.entity.ai.attributes.GlobalEntityTypeAttributes;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -56,9 +58,9 @@ public class EtTuBrute
         DeferredWorkQueue.runLater(() -> {
             GlobalEntityTypeAttributes.put(ModEntityTypes.PIGLIN_BRUTE.get(), PiglinBruteEntity.setCustomAttributes().create());
             GlobalEntityTypeAttributes.put(ModEntityTypes.ZIGLIN_BRUTE.get(), ZiglinBruteEntity.setCustomAttributes().create());
+            MobSpawner.setupMobSpawn();
+            EntitySpawnPlacements.initSpawnPlacements();
         });
-
-        MobSpawner.setupMobSpawn();
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)

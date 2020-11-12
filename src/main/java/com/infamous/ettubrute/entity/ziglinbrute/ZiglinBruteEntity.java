@@ -3,10 +3,7 @@ package com.infamous.ettubrute.entity.ziglinbrute;
 import com.infamous.ettubrute.mod.ModEntityTypes;
 import com.infamous.ettubrute.entity.config.EtTuBruteConfig;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ILivingEntityData;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;
 import net.minecraft.entity.ai.attributes.Attributes;
@@ -59,6 +56,10 @@ public class ZiglinBruteEntity extends ZombifiedPiglinEntity {
     public ZiglinBruteEntity(EntityType<? extends ZombifiedPiglinEntity> entityType, World world) {
         super(entityType, world);
         this.setPathPriority(PathNodeType.LAVA, 8.0F);
+    }
+
+    public static boolean canZiglinBruteSpawn(EntityType<ZiglinBruteEntity> entityType, IWorld world, SpawnReason spawnReason, BlockPos blockPos, Random random) {
+        return !world.getBlockState(blockPos.down()).isIn(Blocks.NETHER_WART_BLOCK);
     }
 
     public void func_230259_a_(@Nullable UUID uuid) {
